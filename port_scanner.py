@@ -1,40 +1,37 @@
 import socket
+import threading
 from datetime import datetime
 
-# Clear the screen
-print("\n" + "-"*50)
-print("Port Scanner")
-print("-"*50)
+# Function to scan a single port
+def scan_port(target, port):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5)  # Reduced timeout for faster scanning
+            if s.connect_ex((target, port)) == 0:
+                print(f"Port {port} is OPEN")
+    except:
+        pass  # Ignore errors
 
-# Get the target from the user
+# Function to scan multiple ports using threading
+def port_scanner(target, start_port, end_port):
+    print("\n" + "-" * 50)
+    print(f"Scanning target: {target}")
+    print(f"Scan started at: {datetime.now()}")
+    print("-" * 50)
+
+    threads = []
+    for port in range(start_port, end_port + 1):
+        thread = threading.Thread(target=scan_port, args=(target, port))
+        thread.start()
+        threads.append(thread)
+
+    # Wait for all threads to finish
+    for thread in threads:
+        thread.join()
+
+    # Print total scan time
+    print(f"Scan completed at: {datetime.now()}")
+
+# Get target input from user
 target = input("Enter the IP address or hostname to scan: ")
-
-# Get the current time
-start_time = datetime.now()
-
-# Print the start time
-print(f"Scanning target: {target}")
-print(f"Scan started at: {start_time}")
-
-# Define the range of ports to scan (1-1024 for this example)
-for port in range(1, 1025):
-    # Create a socket object
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    socket.setdefaulttimeout(1)  # Timeout if connection takes too long
-
-    # Try to connect to the target and port
-    result = s.connect_ex((target, port))
-
-    # Check if the port is open (result will be 0 if successful)
-    if result == 0:
-        print(f"Port {port} is OPEN")
-    else:
-        print(f"Port {port} is CLOSED")
-
-    s.close()
-
-# Get the end time
-end_time = datetime.now()
-# Print the total time taken to complete the scan
-print(f"Scan completed at: {end_time}")
-print(f"Time taken: {end_time - start_time}")
+port_scanner(target, 1, 1024)  # Scan ports from 1 to 1024
